@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Courier {
+  id        Int              @id @default(autoincrement())
+  name      String
+  phone     String           @unique
+  password  String
+  createdAt DateTime         @default(now())
+  orders    DeliveryOrder[]
+}
+
+model Contact {
+  id          Int          @id @default(autoincrement())
+  phone       String
+  displayName String
+  createdAt   DateTime     @default(now())
+  households  Household[]
+
+  @@index([phone])
+}
+
+model Household {
+  id          Int             @id @default(autoincrement())
+  contact     Contact         @relation(fields: [contactId], references: [id])
+  contactId   Int
+  addressText String
+  lat         Float
+  lng         Float
+  doorplate   String?
+  note        String?
+  createdAt   DateTime        @default(now())
+  orders      DeliveryOrder[]
+}
+
+model DeliveryOrder {
+  id          Int            @id @default(autoincrement())
+  courier     Courier        @relation(fields: [courierId], references: [id])
+  courierId   Int
+  household   Household      @relation(fields: [householdId], references: [id])
+  householdId Int
+  status      OrderStatus    @default(pending)
+  gasQuantity Int?
+  plannedTime DateTime?
+  finishedAt  DateTime?
+  createdAt   DateTime       @default(now())
+  notes       DeliveryNote[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model DeliveryNote {
+  id        Int           @id @default(autoincrement())
+  order     DeliveryOrder @relation(fields: [orderId], references: [id])
+  orderId   Int
+  content   String
+  createdAt DateTime      @default(now())
+}
+
+enum OrderStatus {
+  pending
+  delivering
+  done
+  canceled
+}
+

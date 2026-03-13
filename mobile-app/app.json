@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "GasDelivery",
+    "slug": "gas-delivery",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "android": {
+      "package": "com.example.gasdelivery",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "replace-with-your-project-id"
+      },
+      "apiBaseUrl": "http://172.21.170.128:8723",
+      "amapWebKey": "64901e5bab8dc0456554b2491361e1c1"
+    }
+  }
+}
+

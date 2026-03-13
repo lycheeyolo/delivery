@@ -1,0 +1,92 @@
+import Constants from "expo-constants";
+
+const apiBaseUrl =
+  (Constants.expoConfig?.extra as any)?.apiBaseUrl ||
+  (Constants.manifest as any)?.extra?.apiBaseUrl;
+
+let authToken: string | null = null;
+
+export const getToken = () => authToken;
+export const clearToken = () => {
+  authToken = null;
+};
+
+export const apiLogin = async (phone: string, password: string) => {
+  const res = await fetch(`${apiBaseUrl}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, password }),
+  });
+  if (!res.ok) {
+    throw new Error("登录失败");
+  }
+  const data = await res.json();
+  authToken = data.token;
+  return data;
+};
+
+export const apiRegister = async (phone: string, password: string, name?: string) => {
+  const res = await fetch(`${apiBaseUrl}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, password, name }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "注册失败");
+  }
+  return res.json();
+};
+
+async function request(path: string, options: RequestInit = {}) {
+  const headers: any = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+  const res = await fetch(`${apiBaseUrl}${path}`, { ...options, headers });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "请求失败");
+  }
+  return res.json();
+}
+
+export const apiGetPendingOrders = () => request("/api/orders/pending");
+
+export const apiOptimizeRoute = (current: { lat: number; lng: number }, orderIds: number[]) =>
+  request("/api/route/optimize", {
+    method: "POST",
+    body: JSON.stringify({ current, orderIds }),
+  });
+
+export const apiUpdateOrderStatus = (id: number, status: string) =>
+  request(`/api/orders/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+
+export const apiAddOrderNote = (id: number, content: string) =>
+  request(`/api/orders/${id}/note`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+
+export const apiGetDailyStats = (date: string) => request(`/api/stats/daily?date=${date}`);
+
+export const apiGetProfile = () => request("/api/auth/me");
+
+export const apiUpdateProfile = (payload: { name?: string; phone?: string }) =>
+  request("/api/auth/me", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
+export const apiChangePassword = (payload: { oldPassword?: string; newPassword: string }) =>
+  request("/api/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
