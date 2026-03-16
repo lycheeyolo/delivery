@@ -1,19 +1,33 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, Button, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import * as Location from "expo-location";
 import Constants from "expo-constants";
 import { WebView } from "react-native-webview";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
-import { apiGetPendingOrders, apiOptimizeRoute, apiUpdateOrderStatus } from "../services/api";
+import {
+  apiGetPendingOrders,
+  apiOptimizeRoute,
+  apiUpdateOrderStatus,
+} from "../services/api";
 import { Linking } from "react-native";
+import { showAlert } from "../utils/alert";
+import { useFocusEffect } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Map">;
 
 interface PendingOrder {
-  id: number;
+  id: string;
   household: {
-    id: number;
+    id: string;
     addressText: string;
     lat: number;
     lng: number;
@@ -26,26 +40,30 @@ interface PendingOrder {
 
 export const MapScreen: React.FC<Props> = ({ navigation }) => {
   const [orders, setOrders] = useState<PendingOrder[]>([]);
-  const [routeSeq, setRouteSeq] = useState<number[]>([]);
-  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [routeSeq, setRouteSeq] = useState<string[]>([]);
+  const [currentLocation, setCurrentLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     try {
       const data = await apiGetPendingOrders();
       setOrders(data);
     } catch (e: any) {
-      Alert.alert("错误", e.message || "加载待配送列表失败");
+      showAlert("错误", e.message || "加载待配送列表失败");
     }
-  };
+  }, []);
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Button title="通讯录" onPress={() => navigation.navigate("Contacts")} />
+        <Button
+          title="通讯录"
+          onPress={() => navigation.navigate("Contacts")}
+        />
       ),
     });
-    loadOrders();
-
     // 获取当前位置，用于在高德地图上展示
     (async () => {
       try {
@@ -62,13 +80,20 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
         // 忽略定位失败，地图会使用默认中心点
       }
     })();
-  }, []);
+  }, [navigation]);
+
+  // 每次回到主界面时刷新待配送列表（包含从待配送列表 / 新建任务返回）
+  useFocusEffect(
+    useCallback(() => {
+      loadOrders();
+    }, [loadOrders]),
+  );
 
   const handleOptimize = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("提示", "需要定位权限才能规划路线");
+        showAlert("提示", "需要定位权限才能规划路线");
         return;
       }
       const loc = await Location.getCurrentPositionAsync({});
@@ -78,14 +103,14 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
       };
       const orderIds = orders.map((o) => o.id);
       if (orderIds.length === 0) {
-        Alert.alert("提示", "当前没有待配送订单");
+        showAlert("提示", "当前没有待配送订单");
         return;
       }
       const data = await apiOptimizeRoute(current, orderIds);
       setRouteSeq(data.sequence);
-      Alert.alert("提示", "已根据当前位置规划推荐路线");
+      showAlert("提示", "已根据当前位置规划推荐路线");
     } catch (e: any) {
-      Alert.alert("错误", e.message || "路线规划失败");
+      showAlert("错误", e.message || "路线规划失败");
     }
   };
 
@@ -94,7 +119,7 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
     const lng = order.household.lng;
     const url = `androidamap://route?sourceApplication=GasDelivery&dlat=${lat}&dlon=${lng}&dev=0&t=2`;
     Linking.openURL(url).catch(() => {
-      Alert.alert("错误", "无法打开高德地图，请确认手机已安装");
+      showAlert("错误", "无法打开高德地图，请确认手机已安装");
     });
   };
 
@@ -103,13 +128,15 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
       await apiUpdateOrderStatus(order.id, "done");
       await loadOrders();
     } catch (e: any) {
-      Alert.alert("错误", e.message || "更新状态失败");
+      showAlert("错误", e.message || "更新状态失败");
     }
   };
 
   const orderedList =
     routeSeq.length > 0
-      ? [...orders].sort((a, b) => routeSeq.indexOf(a.id) - routeSeq.indexOf(b.id))
+      ? [...orders].sort(
+          (a, b) => routeSeq.indexOf(a.id) - routeSeq.indexOf(b.id),
+        )
       : orders;
 
   const amapWebKey =
@@ -197,7 +224,8 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
       {Platform.OS === "web" ? (
         <View style={styles.mapWrapper}>
           <Text style={styles.mapHint}>
-            Web 预览暂不显示高德地图，仅在手机 App 中展示地图。下面列表数据与真实接口一致。
+            Web 预览暂不显示高德地图，仅在手机 App
+            中展示地图。下面列表数据与真实接口一致。
           </Text>
         </View>
       ) : amapWebKey ? (
@@ -206,10 +234,15 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
         </View>
       ) : (
         <Text style={styles.mapHint}>
-          请在 app.json 的 extra.amapWebKey 中配置高德 Web JS API 的 key，才能在此处显示地图。
+          请在 app.json 的 extra.amapWebKey 中配置高德 Web JS API 的
+          key，才能在此处显示地图。
         </Text>
       )}
       <View style={styles.toolbar}>
+        <Button
+          title="待配送"
+          onPress={() => navigation.navigate("DeliveryList")}
+        />
         <Button title="智能路径规划" onPress={handleOptimize} />
         <Button title="统计" onPress={() => navigation.navigate("Stats")} />
         <Button title="设置" onPress={() => navigation.navigate("Settings")} />
@@ -311,4 +344,3 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
 });
-

@@ -109,6 +109,15 @@ npm run prisma:migrate -- --name init
 
 如果报错，多半是 `DATABASE_URL` 或 MySQL 没启动，检查后重试。
 
+**说明（UUID + 联系人归属）：** 当前项目所有主键均为 UUID（随机字符串），且联系人（Contact）与配送员（Courier）绑定，每个登录用户只能看到、操作自己创建的联系人。若你之前已经跑过旧版迁移（自增 id、联系人未绑定用户），需要先重置数据库再迁移，否则会因字段类型不兼容而失败：
+
+```bash
+cd backend
+npx prisma migrate reset
+```
+
+按提示确认后，会重新执行全部迁移并应用新 schema。
+
 ### 四、启动后端服务
 
 开发模式启动：

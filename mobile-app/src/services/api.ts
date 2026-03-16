@@ -56,25 +56,63 @@ async function request(path: string, options: RequestInit = {}) {
 
 export const apiGetPendingOrders = () => request("/api/orders/pending");
 
-export const apiOptimizeRoute = (current: { lat: number; lng: number }, orderIds: number[]) =>
+/** 带配送列表（待配送+配送中） */
+export const apiGetDeliveryList = () => request("/api/orders/delivery-list");
+
+/** 新增配送任务 */
+export const apiCreateOrder = (payload: { householdId: string; taskNote?: string }) =>
+  request("/api/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const apiOptimizeRoute = (current: { lat: number; lng: number }, orderIds: string[]) =>
   request("/api/route/optimize", {
     method: "POST",
     body: JSON.stringify({ current, orderIds }),
   });
 
-export const apiUpdateOrderStatus = (id: number, status: string) =>
+export const apiUpdateOrderStatus = (id: string, status: string) =>
   request(`/api/orders/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
 
-export const apiAddOrderNote = (id: number, content: string) =>
+export const apiAddOrderNote = (id: string, content: string) =>
   request(`/api/orders/${id}/note`, {
     method: "POST",
     body: JSON.stringify({ content }),
   });
 
 export const apiGetDailyStats = (date: string) => request(`/api/stats/daily?date=${date}`);
+
+export const apiCreateContact = (payload: {
+  phone: string;
+  displayName: string;
+  remark?: string;
+  household?: {
+    addressText?: string;
+    lat: number;
+    lng: number;
+    doorplate?: string;
+    note?: string;
+  };
+}) =>
+  request("/api/contacts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export const apiGetContact = (id: string) => request(`/api/contacts/${id}`);
+
+/** 通讯录列表（可选按手机号搜索），含 households */
+export const apiGetContacts = (phone?: string) =>
+  request(phone ? `/api/contacts?phone=${encodeURIComponent(phone)}` : "/api/contacts");
+
+export const apiDeleteContact = (id: string) =>
+  request(`/api/contacts/${id}`, {
+    method: "DELETE",
+  });
 
 export const apiGetProfile = () => request("/api/auth/me");
 

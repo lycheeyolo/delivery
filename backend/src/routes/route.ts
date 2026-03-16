@@ -1,28 +1,29 @@
 import { Router } from "express";
-import { authMiddleware } from "../middleware/auth";
+import { authMiddleware, AuthRequest } from "../middleware/auth";
 import { prisma } from "../config/prisma";
 
 export const router = Router();
 
 router.use(authMiddleware);
 
-router.post("/optimize", async (req, res, next) => {
+router.post("/optimize", async (req: AuthRequest, res, next) => {
   try {
+    const courierId = req.courierId!;
     const { current, orderIds } = req.body as {
       current: { lat: number; lng: number };
-      orderIds: number[];
+      orderIds: string[];
     };
     if (!current || !Array.isArray(orderIds) || orderIds.length === 0) {
       return res.status(400).json({ message: "缺少必要参数" });
     }
 
     const orders = await prisma.deliveryOrder.findMany({
-      where: { id: { in: orderIds } },
+      where: { id: { in: orderIds }, courierId },
       include: { household: true },
     });
 
     let remaining = [...orders];
-    const sequence: number[] = [];
+    const sequence: string[] = [];
     let curLat = current.lat;
     let curLng = current.lng;
 

@@ -1,16 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  StyleSheet,
+  Button,
+} from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useFocusEffect } from "@react-navigation/native";
 import { RootStackParamList } from "../../App";
 import Constants from "expo-constants";
 import { getToken } from "../services/api";
+import { showAlert } from "../utils/alert";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Contacts">;
 
 interface Contact {
-  id: number;
+  id: string;
   phone: string;
   displayName: string;
+  remark?: string | null;
 }
 
 const apiBaseUrl =
@@ -21,7 +32,18 @@ export const ContactListScreen: React.FC<Props> = ({ navigation }) => {
   const [keyword, setKeyword] = useState("");
   const [list, setList] = useState<Contact[]>([]);
 
-  const loadContacts = async () => {
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          title="新建"
+          onPress={() => navigation.navigate("NewContact")}
+        />
+      ),
+    });
+  }, [navigation]);
+
+  const loadContacts = useCallback(async () => {
     try {
       const token = getToken();
       const res = await fetch(`${apiBaseUrl}/api/contacts?phone=${keyword}`, {
@@ -33,13 +55,16 @@ export const ContactListScreen: React.FC<Props> = ({ navigation }) => {
       const data = await res.json();
       setList(data);
     } catch (e: any) {
-      Alert.alert("错误", e.message || "加载通讯录失败");
+      showAlert("错误", e.message || "加载通讯录失败");
     }
-  };
+  }, [keyword]);
 
-  useEffect(() => {
-    loadContacts();
-  }, []);
+  // 页面每次获得焦点时刷新一次（包括从新建联系人返回）
+  useFocusEffect(
+    useCallback(() => {
+      loadContacts();
+    }, [loadContacts]),
+  );
 
   return (
     <View style={styles.container}>
@@ -56,10 +81,17 @@ export const ContactListScreen: React.FC<Props> = ({ navigation }) => {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.item}
-            onPress={() => navigation.navigate("ContactDetail", { contactId: item.id })}
+            onPress={() =>
+              navigation.navigate("ContactDetail", { contactId: item.id })
+            }
           >
             <Text style={styles.name}>{item.displayName}</Text>
             <Text style={styles.phone}>{item.phone}</Text>
+            {item.remark ? (
+              <Text style={styles.remark} numberOfLines={2}>
+                {item.remark}
+              </Text>
+            ) : null}
           </TouchableOpacity>
         )}
       />
@@ -83,5 +115,5 @@ const styles = StyleSheet.create({
   },
   name: { fontSize: 16, fontWeight: "bold" },
   phone: { color: "#666", marginTop: 4 },
+  remark: { color: "#888", fontSize: 13, marginTop: 4 },
 });
-

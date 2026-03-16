@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert } from "react-native";
+import { View, Text, TextInput, Button, StyleSheet } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { apiRegister, apiLogin } from "../services/api";
+import { showAlert } from "../utils/alert";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Register">;
 
@@ -14,7 +15,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleRegister = async () => {
     if (!phone || !password) {
-      Alert.alert("提示", "请填写手机号和密码");
+      showAlert("提示", "请填写手机号和密码");
       return;
     }
     try {
@@ -27,7 +28,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         routes: [{ name: "Map" }],
       });
     } catch (e: any) {
-      Alert.alert("注册失败", e.message || "请检查网络或稍后再试");
+      showAlert("注册失败", e.message || "请检查网络或稍后再试");
     } finally {
       setLoading(false);
     }
@@ -35,7 +36,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>注册新配送员</Text>
+      <Text style={styles.title}>注册用户</Text>
       <TextInput
         style={styles.input}
         placeholder="姓名（可选）"
@@ -56,7 +57,11 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
       />
-      <Button title={loading ? "注册中..." : "注册并登录"} onPress={handleRegister} disabled={loading} />
+      <Button
+        title={loading ? "注册中..." : "注册并登录"}
+        onPress={handleRegister}
+        disabled={loading}
+      />
     </View>
   );
 };
@@ -81,4 +86,3 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
-

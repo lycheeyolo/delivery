@@ -8,28 +8,33 @@ datasource db {
 }
 
 model Courier {
-  id        Int              @id @default(autoincrement())
+  id        String          @id @default(uuid())
   name      String
-  phone     String           @unique
+  phone     String          @unique
   password  String
-  createdAt DateTime         @default(now())
+  createdAt DateTime        @default(now())
   orders    DeliveryOrder[]
+  contacts  Contact[]
 }
 
 model Contact {
-  id          Int          @id @default(autoincrement())
+  id          String      @id @default(uuid())
+  courierId   String
+  courier     Courier     @relation(fields: [courierId], references: [id], onDelete: Cascade)
   phone       String
   displayName String
-  createdAt   DateTime     @default(now())
+  remark      String?
+  createdAt   DateTime    @default(now())
   households  Household[]
 
+  @@index([courierId])
   @@index([phone])
 }
 
 model Household {
-  id          Int             @id @default(autoincrement())
-  contact     Contact         @relation(fields: [contactId], references: [id])
-  contactId   Int
+  id          String          @id @default(uuid())
+  contact     Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId   String
   addressText String
   lat         Float
   lng         Float
@@ -40,28 +45,29 @@ model Household {
 }
 
 model DeliveryOrder {
-  id          Int            @id @default(autoincrement())
-  courier     Courier        @relation(fields: [courierId], references: [id])
-  courierId   Int
-  household   Household      @relation(fields: [householdId], references: [id])
-  householdId Int
-  status      OrderStatus    @default(pending)
+  id          String        @id @default(uuid())
+  courier     Courier       @relation(fields: [courierId], references: [id], onDelete: Cascade)
+  courierId   String
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  householdId String
+  status      OrderStatus   @default(pending)
   gasQuantity Int?
   plannedTime DateTime?
   finishedAt  DateTime?
-  createdAt   DateTime       @default(now())
+  createdAt   DateTime      @default(now())
   notes       DeliveryNote[]
 
+  @@index([courierId])
   @@index([status])
   @@index([createdAt])
 }
 
 model DeliveryNote {
-  id        Int           @id @default(autoincrement())
-  order     DeliveryOrder @relation(fields: [orderId], references: [id])
-  orderId   Int
+  id        String         @id @default(uuid())
+  order     DeliveryOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
   content   String
-  createdAt DateTime      @default(now())
+  createdAt DateTime       @default(now())
 }
 
 enum OrderStatus {
@@ -70,4 +76,3 @@ enum OrderStatus {
   done
   canceled
 }
-

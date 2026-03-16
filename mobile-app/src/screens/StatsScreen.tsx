@@ -1,23 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Button, StyleSheet, Alert } from "react-native";
+import { View, Text, Button, StyleSheet } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { apiGetDailyStats } from "../services/api";
+import { showAlert } from "../utils/alert";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Stats">;
 
 export const StatsScreen: React.FC<Props> = () => {
   const [date] = useState(() => new Date().toISOString().slice(0, 10));
-  const [stats, setStats] = useState<{ total: number; done: number; pending: number } | null>(
-    null
-  );
+  const [stats, setStats] = useState<{
+    total: number;
+    done: number;
+    pending: number;
+  } | null>(null);
 
   const load = async () => {
     try {
       const data = await apiGetDailyStats(date);
       setStats(data);
     } catch (e: any) {
-      Alert.alert("错误", e.message || "加载统计失败");
+      showAlert("错误", e.message || "加载统计失败");
     }
   };
 
@@ -45,4 +48,3 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
   item: { fontSize: 16, marginBottom: 8 },
 });
-

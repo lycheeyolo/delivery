@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 export interface AuthRequest extends Request {
-  courierId?: number;
+  courierId?: string;
 }
 
 export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -14,7 +14,7 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
 
   try {
     const secret = process.env.JWT_SECRET || "dev-secret";
-    const payload = jwt.verify(token, secret) as { courierId: number };
+    const payload = jwt.verify(token, secret) as { courierId: string };
     req.courierId = payload.courierId;
     next();
   } catch {

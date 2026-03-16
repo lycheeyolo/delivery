@@ -1,8 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
 import { apiLogin } from "../services/api";
+import { showAlert } from "../utils/alert";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
@@ -13,7 +21,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleLogin = async () => {
     if (!phone || !password) {
-      Alert.alert("提示", "请填写手机号和密码");
+      showAlert("提示", "请填写手机号和密码");
       return;
     }
     try {
@@ -21,7 +29,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
       await apiLogin(phone, password);
       navigation.replace("Map");
     } catch (e: any) {
-      Alert.alert("登录失败", e.message || "请检查网络或稍后再试");
+      showAlert("登录失败", e.message || "请检查网络或稍后再试");
     } finally {
       setLoading(false);
     }
@@ -44,8 +52,15 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
       />
-      <Button title={loading ? "登录中..." : "登录"} onPress={handleLogin} disabled={loading} />
-      <TouchableOpacity style={styles.link} onPress={() => navigation.navigate("Register")}>
+      <Button
+        title={loading ? "登录中..." : "登录"}
+        onPress={handleLogin}
+        disabled={loading}
+      />
+      <TouchableOpacity
+        style={styles.link}
+        onPress={() => navigation.navigate("Register")}
+      >
         <Text style={styles.linkText}>没有账号？点此注册</Text>
       </TouchableOpacity>
     </View>
@@ -79,4 +94,3 @@ const styles = StyleSheet.create({
     color: "#007bff",
   },
 });
-
