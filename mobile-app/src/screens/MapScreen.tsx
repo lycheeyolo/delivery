@@ -45,6 +45,7 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
     lat: number;
     lng: number;
   } | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     try {
@@ -156,6 +157,7 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
     const data = {
       current: currentLocation,
       points,
+      selectedId: selectedOrderId,
     };
 
     return `
@@ -196,9 +198,13 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
 
         if (data.points && data.points.length > 0) {
           data.points.forEach(function(p) {
+            var isSelected = data.selectedId && p.id === data.selectedId;
             var marker = new AMap.Marker({
               position: [p.lng, p.lat],
               title: p.name || "",
+              icon: isSelected
+                ? "https://webapi.amap.com/theme/v1.3/markers/n/mark_r.png"
+                : "https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png",
             });
             marker.setMap(map);
           });
@@ -253,29 +259,39 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
       <FlatList
         data={orderedList}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item, index }) => (
-          <View style={styles.card}>
-            <Text style={styles.orderTitle}>
-              序号 {index + 1} · {item.household.contact.displayName}
-            </Text>
-            <Text>手机号：{item.household.contact.phone}</Text>
-            <Text>地址：{item.household.addressText}</Text>
-            <View style={styles.cardButtons}>
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => handleNavigate(item)}
-              >
-                <Text style={styles.buttonText}>导航</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.button, styles.doneButton]}
-                onPress={() => handleMarkDone(item)}
-              >
-                <Text style={styles.buttonText}>已配送</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+        renderItem={({ item, index }) => {
+          const isSelected = item.id === selectedOrderId;
+          return (
+            <TouchableOpacity
+              style={[
+                styles.card,
+                isSelected && styles.cardSelected,
+              ]}
+              activeOpacity={0.8}
+              onPress={() => setSelectedOrderId(item.id)}
+            >
+              <Text style={styles.orderTitle}>
+                序号 {index + 1} · {item.household.contact.displayName}
+              </Text>
+              <Text>手机号：{item.household.contact.phone}</Text>
+              <Text>地址：{item.household.addressText}</Text>
+              <View style={styles.cardButtons}>
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => handleNavigate(item)}
+                >
+                  <Text style={styles.buttonText}>导航</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.doneButton]}
+                  onPress={() => handleMarkDone(item)}
+                >
+                  <Text style={styles.buttonText}>已配送</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
       />
     </View>
   );
@@ -319,6 +335,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
+  },
+  cardSelected: {
+    borderColor: "#007bff",
+    borderWidth: 2,
   },
   orderTitle: {
     fontSize: 16,
