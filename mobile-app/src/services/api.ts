@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 
 const defaultApiBaseUrl: string =
   (Constants.expoConfig?.extra as any)?.apiBaseUrl ||
@@ -21,7 +21,7 @@ export const getCustomApiBaseUrl = () => customApiBaseUrl;
 
 export const loadCustomApiBaseUrl = async () => {
   try {
-    const v = await AsyncStorage.getItem(STORAGE_KEY_API_BASE_URL);
+    const v = await SecureStore.getItemAsync(STORAGE_KEY_API_BASE_URL);
     customApiBaseUrl = v || null;
   } catch {
     customApiBaseUrl = null;
@@ -33,9 +33,9 @@ export const setCustomApiBaseUrl = async (url: string | null) => {
   customApiBaseUrl = trimmed || null;
   try {
     if (customApiBaseUrl) {
-      await AsyncStorage.setItem(STORAGE_KEY_API_BASE_URL, customApiBaseUrl);
+      await SecureStore.setItemAsync(STORAGE_KEY_API_BASE_URL, customApiBaseUrl);
     } else {
-      await AsyncStorage.removeItem(STORAGE_KEY_API_BASE_URL);
+      await SecureStore.deleteItemAsync(STORAGE_KEY_API_BASE_URL);
     }
   } catch {
     // 忽略存储错误，不影响运行
