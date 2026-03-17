@@ -18,7 +18,11 @@ router.post("/optimize", async (req: AuthRequest, res, next) => {
     }
 
     const orders = await prisma.deliveryOrder.findMany({
-      where: { id: { in: orderIds }, courierId },
+      where: {
+        id: { in: orderIds },
+        courierId,
+        deletedAt: null,
+      },
       include: { household: true },
     });
 

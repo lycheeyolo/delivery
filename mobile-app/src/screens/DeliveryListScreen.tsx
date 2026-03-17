@@ -12,8 +12,8 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { NavStackParamList } from "../../App";
-import { apiGetDeliveryList } from "../services/api";
-import { showAlert } from "../utils/alert";
+import { apiGetDeliveryList, apiDeleteOrder } from "../services/api";
+import { showAlert, showConfirm } from "../utils/alert";
 
 type Props = NativeStackScreenProps<NavStackParamList, "DeliveryList">;
 
@@ -25,6 +25,7 @@ interface DeliveryNote {
 interface OrderItem {
   id: string;
   status: string;
+  deletedAt?: string | null;
   household: {
     id: string;
     addressText: string;
@@ -48,7 +49,13 @@ export const DeliveryListScreen: React.FC<Props> = ({ navigation }) => {
   const loadList = useCallback(async () => {
     try {
       const data = await apiGetDeliveryList();
-      setList(data);
+      // 仍然只展示「待配送 / 配送中」且未删除的任务
+      setList(
+        data.filter(
+          (o: OrderItem) =>
+            !o.deletedAt && (o.status === "pending" || o.status === "delivering"),
+        ),
+      );
     } catch (e: any) {
       showAlert("错误", e.message || "加载列表失败");
     } finally {
@@ -63,6 +70,23 @@ export const DeliveryListScreen: React.FC<Props> = ({ navigation }) => {
       loadList();
     }, [loadList]),
   );
+
+  const handleDelete = (id: string) => {
+    showConfirm(
+      "确认删除",
+      "确定要删除该任务吗？",
+      async () => {
+        try {
+          await apiDeleteOrder(id);
+          showAlert("成功", "任务已删除");
+          loadList();
+        } catch (e: any) {
+          showAlert("删除失败", e.message || "请稍后重试");
+        }
+      },
+      { confirmText: "删除" },
+    );
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -140,6 +164,12 @@ export const DeliveryListScreen: React.FC<Props> = ({ navigation }) => {
               >
                 <Text style={styles.detailText}>详情</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => handleDelete(item.id)}
+              >
+                <Text style={styles.deleteText}>删除</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -191,6 +221,14 @@ const styles = StyleSheet.create({
     backgroundColor: "#007bff",
   },
   detailText: { color: "#fff", fontSize: 13 },
+  deleteBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: "#f5f5f5",
+    marginLeft: 8,
+  },
+  deleteText: { color: "#c00", fontSize: 13 },
   empty: { padding: 24, alignItems: "center" },
   emptyText: { color: "#888", fontSize: 14 },
 });

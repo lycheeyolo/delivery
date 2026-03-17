@@ -55,6 +55,7 @@ model DeliveryOrder {
   plannedTime DateTime?
   finishedAt  DateTime?
   createdAt   DateTime      @default(now())
+  deletedAt   DateTime?
   notes       DeliveryNote[]
 
   @@index([courierId])

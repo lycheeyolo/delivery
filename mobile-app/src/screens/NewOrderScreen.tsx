@@ -84,7 +84,7 @@ export const NewOrderScreen: React.FC<Props> = ({ navigation }) => {
         taskNote: taskNote.trim() || undefined,
       });
       showAlert("成功", "任务已添加");
-      navigation.navigate("DeliveryList");
+      navigation.goBack();
     } catch (e: any) {
       showAlert("添加失败", e.message || "请稍后重试");
     } finally {

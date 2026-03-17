@@ -65,9 +65,11 @@ export const NewContactScreen: React.FC<Props> = ({ route, navigation }) => {
       await apiCreateContact(payload);
       showAlert("成功", "联系人已添加");
       if (returnTo === "NewOrder") {
-        navigation.goBack();
+        // 从新增任务进入时，保存后明确回到新增任务界面
+        navigation.navigate("NewOrder");
       } else {
-        navigation.reset({ index: 0, routes: [{ name: "ContactList" }] });
+        // 其他场景（如通讯录）保持返回上一个页面的逻辑
+        navigation.goBack();
       }
     } catch (e: any) {
       showAlert("添加失败", e.message || "请稍后再试");

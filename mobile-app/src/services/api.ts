@@ -84,6 +84,11 @@ export const apiAddOrderNote = (id: string, content: string) =>
     body: JSON.stringify({ content }),
   });
 
+export const apiDeleteOrder = (id: string) =>
+  request(`/api/orders/${id}`, {
+    method: "DELETE",
+  });
+
 export const apiGetDailyStats = (date: string) => request(`/api/stats/daily?date=${date}`);
 
 export const apiCreateContact = (payload: {

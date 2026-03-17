@@ -13,6 +13,7 @@ router.get("/pending", async (req: AuthRequest, res, next) => {
       where: {
         courierId,
         status: "pending",
+        deletedAt: null,
       },
       include: {
         household: {
@@ -35,7 +36,7 @@ router.get("/delivery-list", async (req: AuthRequest, res, next) => {
     const orders = await prisma.deliveryOrder.findMany({
       where: {
         courierId,
-        status: { in: ["pending", "delivering"] },
+        // 前端自行按 status / deletedAt 分组，这里返回所有状态
       },
       include: {
         household: {
@@ -132,7 +133,7 @@ router.post("/:id/note", async (req: AuthRequest, res, next) => {
       return res.status(400).json({ message: "备注内容不能为空" });
     }
     const order = await prisma.deliveryOrder.findFirst({
-      where: { id, courierId },
+      where: { id, courierId, deletedAt: null },
     });
     if (!order) {
       return res.status(404).json({ message: "订单不存在" });
@@ -141,6 +142,29 @@ router.post("/:id/note", async (req: AuthRequest, res, next) => {
       data: { orderId: id, content },
     });
     res.status(201).json(note);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/:id", async (req: AuthRequest, res, next) => {
+  try {
+    const id = req.params.id as string;
+    const courierId = req.courierId!;
+    const order = await prisma.deliveryOrder.findFirst({
+      where: { id, courierId },
+    });
+    if (!order) {
+      return res.status(404).json({ message: "订单不存在" });
+    }
+    const updated = await prisma.deliveryOrder.update({
+      where: { id },
+      data: {
+        status: "canceled",
+        deletedAt: new Date(),
+      },
+    });
+    res.json({ success: true, order: updated });
   } catch (err) {
     next(err);
   }

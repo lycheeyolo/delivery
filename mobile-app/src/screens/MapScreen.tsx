@@ -14,18 +14,22 @@ import { WebView } from "react-native-webview";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { NavStackParamList } from "../../App";
 import {
-  apiGetPendingOrders,
+  apiGetDeliveryList,
   apiOptimizeRoute,
   apiUpdateOrderStatus,
+  apiDeleteOrder,
 } from "../services/api";
 import { Linking } from "react-native";
-import { showAlert } from "../utils/alert";
+import { showAlert, showConfirm } from "../utils/alert";
 import { useFocusEffect } from "@react-navigation/native";
 
 type Props = NativeStackScreenProps<NavStackParamList, "Map">;
 
 interface PendingOrder {
   id: string;
+  createdAt: string;
+  finishedAt?: string | null;
+  deletedAt?: string | null;
   household: {
     id: string;
     addressText: string;
@@ -34,8 +38,14 @@ interface PendingOrder {
     contact: {
       phone: string;
       displayName: string;
+      remark?: string | null;
     };
   };
+  status: string;
+  notes: {
+    id: string;
+    content: string;
+  }[];
 }
 
 export const MapScreen: React.FC<Props> = ({ navigation }) => {
@@ -46,10 +56,18 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
     lng: number;
   } | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [tab, setTab] = useState<"pending" | "done" | "deleted">("pending");
+
+  const formatTime = (iso?: string | null) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString();
+  };
 
   const loadOrders = useCallback(async () => {
     try {
-      const data = await apiGetPendingOrders();
+      const data = await apiGetDeliveryList();
       setOrders(data);
     } catch (e: any) {
       showAlert("错误", e.message || "加载待配送列表失败");
@@ -94,7 +112,9 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
         lat: loc.coords.latitude,
         lng: loc.coords.longitude,
       };
-      const orderIds = orders.map((o) => o.id);
+      const orderIds = orders
+        .filter((o) => o.status === "pending" || o.status === "delivering")
+        .map((o) => o.id);
       if (orderIds.length === 0) {
         showAlert("提示", "当前没有待配送订单");
         return;
@@ -125,12 +145,43 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
-  const orderedList =
+  const taskNoteText = (notes: PendingOrder["notes"]) =>
+    notes.length > 0 ? notes.map((n) => n.content).join("；") : "—";
+
+  const handleDelete = (order: PendingOrder) => {
+    showConfirm(
+      "确认删除",
+      "确定要删除该任务吗？",
+      async () => {
+        try {
+          await apiDeleteOrder(order.id);
+          showAlert("成功", "任务已删除");
+          await loadOrders();
+        } catch (e: any) {
+          showAlert("删除失败", e.message || "请稍后重试");
+        }
+      },
+      { confirmText: "删除" },
+    );
+  };
+
+  const baseList =
     routeSeq.length > 0
       ? [...orders].sort(
           (a, b) => routeSeq.indexOf(a.id) - routeSeq.indexOf(b.id),
         )
       : orders;
+
+  const filteredList =
+    tab === "pending"
+      ? baseList.filter(
+          (o) =>
+            (o.status === "pending" || o.status === "delivering") &&
+            !o.deletedAt,
+        )
+      : tab === "done"
+      ? baseList.filter((o) => o.status === "done" && !o.deletedAt)
+      : baseList.filter((o) => !!o.deletedAt);
 
   const amapWebKey =
     (Constants.expoConfig?.extra as any)?.amapWebKey ||
@@ -237,20 +288,65 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
         </Text>
       )}
       <View style={styles.toolbar}>
+        <View style={styles.tabs}>
+          <TouchableOpacity
+            style={[styles.tabItem, tab === "pending" && styles.tabItemActive]}
+            onPress={() => setTab("pending")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                tab === "pending" && styles.tabTextActive,
+              ]}
+            >
+              待配送
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, tab === "done" && styles.tabItemActive]}
+            onPress={() => setTab("done")}
+          >
+            <Text
+              style={[styles.tabText, tab === "done" && styles.tabTextActive]}
+            >
+              已配送
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabItem, tab === "deleted" && styles.tabItemActive]}
+            onPress={() => setTab("deleted")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                tab === "deleted" && styles.tabTextActive,
+              ]}
+            >
+              已删除
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Button
-          title="待配送"
-          onPress={() => navigation.navigate("DeliveryList")}
+          title="新增任务"
+          onPress={() => navigation.navigate("NewOrder")}
         />
-        <Button title="智能路径规划" onPress={handleOptimize} />
       </View>
+      {tab === "pending" && (
+        <View style={styles.routeRow}>
+          <Button title="智能路径规划" onPress={handleOptimize} />
+        </View>
+      )}
       <Text style={styles.hint}>
         当前示例以列表方式展示待配送家庭；后续你可以按文档接入高德地图组件，在地图上显示这些坐标。
       </Text>
       <FlatList
-        data={orderedList}
+        data={filteredList}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item, index }) => {
           const isSelected = item.id === selectedOrderId;
+          const showDoneButton =
+            tab !== "deleted" && !item.deletedAt && item.status !== "done";
+          const showDeleteButton = tab !== "deleted" && !item.deletedAt;
           return (
             <TouchableOpacity
               style={[
@@ -265,6 +361,31 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
               </Text>
               <Text>手机号：{item.household.contact.phone}</Text>
               <Text>地址：{item.household.addressText}</Text>
+              {(item.household.contact.remark || taskNoteText(item.notes) !== "—") && (
+                <Text style={styles.taskNote} numberOfLines={2}>
+                  {[
+                    item.household.contact.remark?.trim(),
+                    taskNoteText(item.notes) !== "—"
+                      ? taskNoteText(item.notes)
+                      : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" || ")}
+                </Text>
+              )}
+              <Text style={styles.timeText}>
+                创建时间：{formatTime(item.createdAt)}
+              </Text>
+              {(item.status === "done" || tab === "done") && (
+                <Text style={styles.timeText}>
+                  完成时间：{formatTime(item.finishedAt)}
+                </Text>
+              )}
+              {tab === "deleted" && (
+                <Text style={styles.timeText}>
+                  删除时间：{formatTime((item as any).deletedAt)}
+                </Text>
+              )}
               <View style={styles.cardButtons}>
                 <TouchableOpacity
                   style={styles.button}
@@ -272,12 +393,22 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
                 >
                   <Text style={styles.buttonText}>导航</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.doneButton]}
-                  onPress={() => handleMarkDone(item)}
-                >
-                  <Text style={styles.buttonText}>已配送</Text>
-                </TouchableOpacity>
+                {showDoneButton && (
+                  <TouchableOpacity
+                    style={[styles.button, styles.doneButton]}
+                    onPress={() => handleMarkDone(item)}
+                  >
+                    <Text style={styles.buttonText}>已配送</Text>
+                  </TouchableOpacity>
+                )}
+                {showDeleteButton && (
+                  <TouchableOpacity
+                    style={[styles.button, styles.deleteButton]}
+                    onPress={() => handleDelete(item)}
+                  >
+                    <Text style={styles.buttonText}>删除</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </TouchableOpacity>
           );
@@ -311,8 +442,37 @@ const styles = StyleSheet.create({
   },
   toolbar: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  tabs: {
+    flexDirection: "row",
+    marginRight: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+  },
+  tabItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: "center",
+    marginRight: 12,
+  },
+  tabItemActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#007bff",
+  },
+  tabText: {
+    fontSize: 13,
+    color: "#333",
+  },
+  tabTextActive: {
+    color: "#000",
+    fontWeight: "bold",
+  },
+  routeRow: {
     marginBottom: 8,
+    alignItems: "flex-start",
   },
   hint: {
     fontSize: 12,
@@ -335,6 +495,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 4,
   },
+  remark: { fontSize: 13, color: "#888", marginTop: 4 },
+  taskNote: { fontSize: 13, color: "#555", marginTop: 4, fontStyle: "italic" },
+  timeText: { fontSize: 12, color: "#666", marginTop: 2 },
   cardButtons: {
     flexDirection: "row",
     marginTop: 8,
@@ -349,6 +512,9 @@ const styles = StyleSheet.create({
   },
   doneButton: {
     backgroundColor: "#28a745",
+  },
+  deleteButton: {
+    backgroundColor: "#dc3545",
   },
   buttonText: {
     color: "#fff",
