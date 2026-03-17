@@ -1,5 +1,5 @@
 import Constants from "expo-constants";
-import * as SecureStore from "expo-secure-store";
+import * as FileSystem from "expo-file-system";
 
 const defaultApiBaseUrl: string =
   (Constants.expoConfig?.extra as any)?.apiBaseUrl ||
@@ -7,6 +7,7 @@ const defaultApiBaseUrl: string =
 
 let customApiBaseUrl: string | null = null;
 const STORAGE_KEY_API_BASE_URL = "customApiBaseUrl";
+const CONFIG_FILE_PATH = `${FileSystem.documentDirectory || ""}backend-config.json`;
 
 let authToken: string | null = null;
 
@@ -21,8 +22,19 @@ export const getCustomApiBaseUrl = () => customApiBaseUrl;
 
 export const loadCustomApiBaseUrl = async () => {
   try {
-    const v = await SecureStore.getItemAsync(STORAGE_KEY_API_BASE_URL);
-    customApiBaseUrl = v || null;
+    if (!CONFIG_FILE_PATH) {
+      customApiBaseUrl = null;
+      return;
+    }
+    const info = await FileSystem.getInfoAsync(CONFIG_FILE_PATH);
+    if (!info.exists) {
+      customApiBaseUrl = null;
+      return;
+    }
+    const content = await FileSystem.readAsStringAsync(CONFIG_FILE_PATH);
+    const parsed = JSON.parse(content);
+    const v = parsed?.[STORAGE_KEY_API_BASE_URL];
+    customApiBaseUrl = typeof v === "string" && v.trim() ? v.trim() : null;
   } catch {
     customApiBaseUrl = null;
   }
@@ -32,10 +44,14 @@ export const setCustomApiBaseUrl = async (url: string | null) => {
   const trimmed = url?.trim();
   customApiBaseUrl = trimmed || null;
   try {
+    if (!CONFIG_FILE_PATH) return;
     if (customApiBaseUrl) {
-      await SecureStore.setItemAsync(STORAGE_KEY_API_BASE_URL, customApiBaseUrl);
-    } else {
-      await SecureStore.deleteItemAsync(STORAGE_KEY_API_BASE_URL);
+      await FileSystem.writeAsStringAsync(
+        CONFIG_FILE_PATH,
+        JSON.stringify({ [STORAGE_KEY_API_BASE_URL]: customApiBaseUrl }),
+      );
+    } else if (await FileSystem.getInfoAsync(CONFIG_FILE_PATH).then((i) => i.exists)) {
+      await FileSystem.deleteAsync(CONFIG_FILE_PATH, { idempotent: true });
     }
   } catch {
     // 忽略存储错误，不影响运行
