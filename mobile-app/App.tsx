@@ -69,7 +69,11 @@ const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 
 function NavStackScreen() {
   return (
-    <NavStack.Navigator>
+    <NavStack.Navigator
+      screenOptions={{
+        headerTitleAlign: "center",
+      }}
+    >
       <NavStack.Screen name="Map" component={MapScreen} options={{ title: "配送地图" }} />
       <NavStack.Screen name="DeliveryList" component={DeliveryListScreen} options={{ title: "待配送列表" }} />
       <NavStack.Screen name="NewOrder" component={NewOrderScreen} options={{ title: "新增任务" }} />
@@ -83,7 +87,11 @@ function NavStackScreen() {
 
 function ContactsStackScreen() {
   return (
-    <ContactsStack.Navigator>
+    <ContactsStack.Navigator
+      screenOptions={{
+        headerTitleAlign: "center",
+      }}
+    >
       <ContactsStack.Screen name="ContactList" component={ContactListScreen} options={{ title: "通讯录" }} />
       <ContactsStack.Screen name="ContactDetail" component={ContactDetailScreen} options={{ title: "家庭详情" }} />
       <ContactsStack.Screen name="NewContact" component={NewContactScreen} options={{ title: "新建联系人" }} />
@@ -95,7 +103,11 @@ function ContactsStackScreen() {
 
 function HomeStackScreen() {
   return (
-    <HomeStack.Navigator>
+    <HomeStack.Navigator
+      screenOptions={{
+        headerTitleAlign: "center",
+      }}
+    >
       <HomeStack.Screen name="Profile" component={ProfileScreen} options={{ title: "我的" }} />
       <HomeStack.Screen name="Stats" component={StatsScreen} options={{ title: "统计" }} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} options={{ title: "设置" }} />
@@ -136,8 +148,15 @@ export default function App() {
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
-      <RootStack.Navigator initialRouteName="Login" screenOptions={{ headerShown: true }}>
-        <RootStack.Screen name="Login" component={LoginScreen} options={{ title: "登录" }} />
+      <RootStack.Navigator
+        initialRouteName="Login"
+        screenOptions={{ headerShown: true, headerTitleAlign: "center" }}
+      >
+        <RootStack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
         <RootStack.Screen name="Register" component={RegisterScreen} options={{ title: "注册" }} />
         <RootStack.Screen name="Main" component={MainTabsScreen} options={{ headerShown: false }} />
       </RootStack.Navigator>

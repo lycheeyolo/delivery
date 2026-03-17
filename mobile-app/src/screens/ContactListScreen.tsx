@@ -32,15 +32,9 @@ export const ContactListScreen: React.FC<Props> = ({ navigation }) => {
   const [keyword, setKeyword] = useState("");
   const [list, setList] = useState<Contact[]>([]);
 
+  // 通讯录头部按钮挪到标题下方，这里不再配置 headerRight
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Button
-          title="新建"
-          onPress={() => navigation.navigate("NewContact")}
-        />
-      ),
-    });
+    navigation.setOptions({});
   }, [navigation]);
 
   const loadContacts = useCallback(async () => {
@@ -68,6 +62,15 @@ export const ContactListScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.topActions}>
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => navigation.navigate("NewContact")}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.addButtonText}>添加新用户</Text>
+        </TouchableOpacity>
+      </View>
       <TextInput
         style={styles.input}
         placeholder="按手机号搜索"
@@ -101,6 +104,21 @@ export const ContactListScreen: React.FC<Props> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 12 },
+  topActions: {
+    marginBottom: 4,
+  },
+  addButton: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 4,
+    alignItems: "flex-start",
+  },
+  addButtonText: {
+    color: "#000",
+    fontSize: 14,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
