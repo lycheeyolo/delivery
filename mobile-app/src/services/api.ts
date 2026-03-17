@@ -1,8 +1,12 @@
 import Constants from "expo-constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const apiBaseUrl =
+const defaultApiBaseUrl: string =
   (Constants.expoConfig?.extra as any)?.apiBaseUrl ||
   (Constants.manifest as any)?.extra?.apiBaseUrl;
+
+let customApiBaseUrl: string | null = null;
+const STORAGE_KEY_API_BASE_URL = "customApiBaseUrl";
 
 let authToken: string | null = null;
 
@@ -11,8 +15,35 @@ export const clearToken = () => {
   authToken = null;
 };
 
+export const getDefaultApiBaseUrl = () => defaultApiBaseUrl;
+export const getCurrentApiBaseUrl = () => customApiBaseUrl || defaultApiBaseUrl;
+export const getCustomApiBaseUrl = () => customApiBaseUrl;
+
+export const loadCustomApiBaseUrl = async () => {
+  try {
+    const v = await AsyncStorage.getItem(STORAGE_KEY_API_BASE_URL);
+    customApiBaseUrl = v || null;
+  } catch {
+    customApiBaseUrl = null;
+  }
+};
+
+export const setCustomApiBaseUrl = async (url: string | null) => {
+  const trimmed = url?.trim();
+  customApiBaseUrl = trimmed || null;
+  try {
+    if (customApiBaseUrl) {
+      await AsyncStorage.setItem(STORAGE_KEY_API_BASE_URL, customApiBaseUrl);
+    } else {
+      await AsyncStorage.removeItem(STORAGE_KEY_API_BASE_URL);
+    }
+  } catch {
+    // 忽略存储错误，不影响运行
+  }
+};
+
 export const apiLogin = async (phone: string, password: string) => {
-  const res = await fetch(`${apiBaseUrl}/api/auth/login`, {
+  const res = await fetch(`${getCurrentApiBaseUrl()}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone, password }),
@@ -26,7 +57,7 @@ export const apiLogin = async (phone: string, password: string) => {
 };
 
 export const apiRegister = async (phone: string, password: string, name?: string) => {
-  const res = await fetch(`${apiBaseUrl}/api/auth/register`, {
+  const res = await fetch(`${getCurrentApiBaseUrl()}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone, password, name }),
@@ -46,7 +77,8 @@ async function request(path: string, options: RequestInit = {}) {
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
-  const res = await fetch(`${apiBaseUrl}${path}`, { ...options, headers });
+  const baseUrl = getCurrentApiBaseUrl();
+  const res = await fetch(`${baseUrl}${path}`, { ...options, headers });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "请求失败");

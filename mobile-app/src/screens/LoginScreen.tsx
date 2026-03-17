@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -37,7 +37,13 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Post Delivery</Text>
+      <TouchableOpacity
+        style={styles.settingsLink}
+        onPress={() => navigation.navigate("SettingsConfig")}
+      >
+        <Text style={styles.settingsLinkText}>设置</Text>
+      </TouchableOpacity>
+      <Text style={styles.title}>Delivery</Text>
       <TextInput
         style={styles.input}
         placeholder="手机号"
@@ -72,6 +78,15 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: "center",
+  },
+  settingsLink: {
+    position: "absolute",
+    top: 40,
+    right: 24,
+  },
+  settingsLinkText: {
+    fontSize: 14,
+    color: "#555",
   },
   title: {
     fontSize: 24,

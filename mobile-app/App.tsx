@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
+import { loadCustomApiBaseUrl } from "./src/services/api";
 
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { RegisterScreen } from "./src/screens/RegisterScreen";
@@ -18,12 +19,14 @@ import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { StatsScreen } from "./src/screens/StatsScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { ChangePasswordScreen } from "./src/screens/ChangePasswordScreen";
+import { BackendConfigScreen } from "./src/screens/BackendConfigScreen";
 
 // 根 Stack：仅登录/注册/主界面
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   Main: undefined;
+  SettingsConfig: undefined;
 };
 
 // 底部三栏
@@ -145,6 +148,11 @@ function MainTabsScreen() {
 }
 
 export default function App() {
+  useEffect(() => {
+    // 启动时加载自定义后端地址（如有）
+    loadCustomApiBaseUrl();
+  }, []);
+
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
@@ -158,6 +166,11 @@ export default function App() {
           options={{ headerShown: false }}
         />
         <RootStack.Screen name="Register" component={RegisterScreen} options={{ title: "注册" }} />
+        <RootStack.Screen
+          name="SettingsConfig"
+          component={BackendConfigScreen}
+          options={{ title: "设置" }}
+        />
         <RootStack.Screen name="Main" component={MainTabsScreen} options={{ headerShown: false }} />
       </RootStack.Navigator>
     </NavigationContainer>
