@@ -94,7 +94,7 @@ JWT_SECRET="随便写一个较长的字符串即可"
 npm run prisma:generate
 ```
 
-#### 2. 创建数据表（迁移）
+#### 2. 创建数据表（迁移，默认方式：有创建数据库权限）
 
 第一次运行迁移：
 
@@ -108,6 +108,41 @@ npm run prisma:migrate -- --name init
 - 根据 `prisma/schema.prisma` 创建表
 
 如果报错，多半是 `DATABASE_URL` 或 MySQL 没启动，检查后重试。
+
+#### 3. 如果你的数据库账号没有「创建新数据库」权限（只能使用现有数据库）
+
+有些云数据库或托管环境只允许你使用已经创建好的数据库（例如只给你一个 `gas_delivery` 数据库），**不能执行 `CREATE DATABASE`**。这种情况下，`npm run prisma:migrate` 可能会报类似错误：
+
+```text
+Prisma Migrate could not create the shadow database. Please make sure the database user has permission to create databases.
+User `xxx` was denied access on the database `gas_delivery`
+```
+
+这不是连接问题，而是 Prisma 在执行迁移时，默认会尝试创建一个「影子数据库（shadow database）」用来对比 schema，但你当前账号没有建库权限。
+
+此时可以改用 **`prisma db push`** 直接在现有数据库里创建 / 更新表结构，而不使用迁移文件和 shadow database：
+
+1. 确保 `.env` 中的 `DATABASE_URL` 指向你已经创建好的数据库（例如 `gas_delivery`）：
+
+   ```env
+   DATABASE_URL="mysql://你的用户:你的密码@你的数据库地址:端口/gas_delivery"
+   ```
+
+2. 在 `backend` 目录执行：
+
+   ```bash
+   npx prisma db push
+   ```
+
+   这一命令会：
+
+   - 直接连接到 `DATABASE_URL` 对应的数据库；
+   - 根据 `prisma/schema.prisma` 创建 / 修改表；
+   - **不会尝试创建新的数据库，也不会使用 shadow database**。
+
+3. 执行完成后，你可以在图形工具（如 DBeaver）中打开 `gas_delivery` 数据库，检查是否已经自动生成了相关表（如 `User`、`Courier` 等对应的表）。
+
+> 提示：在“没有建库权限、只能用已有库”的环境中，开发阶段只用 `npx prisma db push` 即可完成表结构初始化与更新；如果将来迁移到有完整权限的数据库，再考虑使用 `npm run prisma:migrate` 来生成正式的迁移文件。
 
 **说明（UUID + 联系人归属）：** 当前项目所有主键均为 UUID（随机字符串），且联系人（Contact）与配送员（Courier）绑定，每个登录用户只能看到、操作自己创建的联系人。若你之前已经跑过旧版迁移（自增 id、联系人未绑定用户），需要先重置数据库再迁移，否则会因字段类型不兼容而失败：
 
