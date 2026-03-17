@@ -10,12 +10,12 @@ import {
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
-import { RootStackParamList } from "../../App";
+import { ContactsStackParamList } from "../../App";
 import Constants from "expo-constants";
 import { getToken } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Contacts">;
+type Props = NativeStackScreenProps<ContactsStackParamList, "ContactList">;
 
 interface Contact {
   id: string;

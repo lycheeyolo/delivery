@@ -12,7 +12,7 @@ import * as Location from "expo-location";
 import Constants from "expo-constants";
 import { WebView } from "react-native-webview";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import {
   apiGetPendingOrders,
   apiOptimizeRoute,
@@ -22,7 +22,7 @@ import { Linking } from "react-native";
 import { showAlert } from "../utils/alert";
 import { useFocusEffect } from "@react-navigation/native";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Map">;
+type Props = NativeStackScreenProps<NavStackParamList, "Map">;
 
 interface PendingOrder {
   id: string;
@@ -57,14 +57,6 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
   }, []);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Button
-          title="通讯录"
-          onPress={() => navigation.navigate("Contacts")}
-        />
-      ),
-    });
     // 获取当前位置，用于在高德地图上展示
     (async () => {
       try {
@@ -250,8 +242,6 @@ export const MapScreen: React.FC<Props> = ({ navigation }) => {
           onPress={() => navigation.navigate("DeliveryList")}
         />
         <Button title="智能路径规划" onPress={handleOptimize} />
-        <Button title="统计" onPress={() => navigation.navigate("Stats")} />
-        <Button title="设置" onPress={() => navigation.navigate("Settings")} />
       </View>
       <Text style={styles.hint}>
         当前示例以列表方式展示待配送家庭；后续你可以按文档接入高德地图组件，在地图上显示这些坐标。

@@ -11,11 +11,11 @@ import {
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useFocusEffect } from "@react-navigation/native";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import { apiGetContacts, apiCreateOrder } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "NewOrder">;
+type Props = NativeStackScreenProps<NavStackParamList, "NewOrder">;
 
 interface Household {
   id: string;
@@ -155,7 +155,7 @@ export const NewOrderScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.title}>选择联系人</Text>
         <Button
           title="新建联系人"
-          onPress={() => navigation.navigate("NewContact")}
+          onPress={() => navigation.navigate("NewContact", { returnTo: "NewOrder" })}
         />
       </View>
       <FlatList

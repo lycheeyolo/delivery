@@ -9,12 +9,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import Constants from "expo-constants";
 import { WebView } from "react-native-webview";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "MapPicker">;
+type Props = NativeStackScreenProps<NavStackParamList, "MapPicker">;
 
 const DEFAULT_CENTER = { lat: 39.90923, lng: 116.397428 };
 

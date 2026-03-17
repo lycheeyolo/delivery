@@ -11,11 +11,11 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import { apiGetDeliveryList } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "DeliveryList">;
+type Props = NativeStackScreenProps<NavStackParamList, "DeliveryList">;
 
 interface DeliveryNote {
   id: string;

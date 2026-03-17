@@ -27,7 +27,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     try {
       setLoading(true);
       await apiLogin(phone, password);
-      navigation.replace("Map");
+      navigation.replace("Main");
     } catch (e: any) {
       showAlert("登录失败", e.message || "请检查网络或稍后再试");
     } finally {

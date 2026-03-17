@@ -8,11 +8,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import { apiGetContact, apiDeleteContact } from "../services/api";
 import { showAlert, showConfirm } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "ContactDetail">;
+type Props = NativeStackScreenProps<NavStackParamList, "ContactDetail">;
 
 interface Household {
   id: string;

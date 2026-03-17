@@ -25,7 +25,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       await apiLogin(phone, password);
       navigation.reset({
         index: 0,
-        routes: [{ name: "Map" }],
+        routes: [{ name: "Main" }],
       });
     } catch (e: any) {
       showAlert("注册失败", e.message || "请检查网络或稍后再试");

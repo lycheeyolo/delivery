@@ -9,14 +9,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import { apiCreateContact } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "NewContact">;
+type Props = NativeStackScreenProps<NavStackParamList, "NewContact">;
 
 export const NewContactScreen: React.FC<Props> = ({ route, navigation }) => {
-  const { pickedLat, pickedLng } = route.params || {};
+  const { pickedLat, pickedLng, returnTo } = route.params || {};
   const [phone, setPhone] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [remark, setRemark] = useState("");
@@ -64,7 +64,11 @@ export const NewContactScreen: React.FC<Props> = ({ route, navigation }) => {
       setLoading(true);
       await apiCreateContact(payload);
       showAlert("成功", "联系人已添加");
-      navigation.reset({ index: 0, routes: [{ name: "Contacts" }] });
+      if (returnTo === "NewOrder") {
+        navigation.goBack();
+      } else {
+        navigation.reset({ index: 0, routes: [{ name: "ContactList" }] });
+      }
     } catch (e: any) {
       showAlert("添加失败", e.message || "请稍后再试");
     } finally {

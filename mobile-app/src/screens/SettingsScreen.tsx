@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TextInput, Button } from "react-native";
+import { CommonActions } from "@react-navigation/native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { apiGetProfile, apiUpdateProfile, clearToken } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
+type Props = NativeStackScreenProps<HomeStackParamList, "Settings">;
 
 export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -45,10 +46,9 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleLogout = () => {
     clearToken();
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "Login" }],
-    });
+    let nav: any = navigation;
+    while (nav?.getParent()) nav = nav.getParent();
+    if (nav) nav.dispatch(CommonActions.reset({ index: 0, routes: [{ name: "Login" }] }));
   };
 
   return (

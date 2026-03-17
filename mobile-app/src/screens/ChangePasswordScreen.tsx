@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, Button } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { apiChangePassword } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "ChangePassword">;
+type Props = NativeStackScreenProps<HomeStackParamList, "ChangePassword">;
 
 export const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
   const [oldPassword, setOldPassword] = useState("");

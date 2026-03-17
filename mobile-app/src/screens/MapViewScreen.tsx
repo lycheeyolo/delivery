@@ -1,11 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { NavStackParamList } from "../../App";
 import Constants from "expo-constants";
 import { WebView } from "react-native-webview";
 
-type Props = NativeStackScreenProps<RootStackParamList, "MapView">;
+type Props = NativeStackScreenProps<NavStackParamList, "MapView">;
 
 export const MapViewScreen: React.FC<Props> = ({ route }) => {
   const { lat, lng, title } = route.params || {};

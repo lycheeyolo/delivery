@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../App";
+import { HomeStackParamList } from "../../App";
 import { apiGetDailyStats } from "../services/api";
 import { showAlert } from "../utils/alert";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Stats">;
+type Props = NativeStackScreenProps<HomeStackParamList, "Stats">;
 
 export const StatsScreen: React.FC<Props> = () => {
   const [date] = useState(() => new Date().toISOString().slice(0, 10));
