@@ -14,16 +14,19 @@
       "package": "com.example.gasdelivery",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
-      ]
+        "ACCESS_COARSE_LOCATION",
+        "INTERNET"
+      ],
+      "usesCleartextTraffic": true
     },
     "extra": {
       "eas": {
         "projectId": "f866298b-ba82-4c77-a679-44034d24efae"
       },
-      "apiBaseUrl": "http://172.21.170.128:8723",
+      "apiBaseUrl": "http://49.234.163.92:8000",
       "amapWebKey": "64901e5bab8dc0456554b2491361e1c1"
     },
-    "owner": "lycheeyolo123s-organization"
+    "owner": "lycheeyolo123s-organization",
+    "plugins": ["./app.plugin.js"]
   }
 }

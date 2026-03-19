@@ -3,7 +3,8 @@ import * as FileSystem from "expo-file-system";
 
 const defaultApiBaseUrl: string =
   (Constants.expoConfig?.extra as any)?.apiBaseUrl ||
-  (Constants.manifest as any)?.extra?.apiBaseUrl;
+  (Constants.manifest as any)?.extra?.apiBaseUrl ||
+  "http://49.234.163.92:8000";
 
 let customApiBaseUrl: string | null = null;
 const STORAGE_KEY_API_BASE_URL = "customApiBaseUrl";
@@ -59,11 +60,17 @@ export const setCustomApiBaseUrl = async (url: string | null) => {
 };
 
 export const apiLogin = async (phone: string, password: string) => {
-  const res = await fetch(`${getCurrentApiBaseUrl()}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone, password }),
-  });
+  const baseUrl = getCurrentApiBaseUrl();
+  let res: Response;
+  try {
+    res = await fetch(`${baseUrl}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password }),
+    });
+  } catch (e: any) {
+    throw new Error(`网络请求失败（后端地址：${baseUrl}）\n${e?.message || e}`);
+  }
   if (!res.ok) {
     throw new Error("登录失败");
   }
